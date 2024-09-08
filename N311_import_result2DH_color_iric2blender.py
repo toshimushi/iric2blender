@@ -12,13 +12,12 @@ import numpy as np
 class ImportResult2DH_Color_iRIC2blender(bpy.types.Operator):
     #ラベル名の宣言
     bl_idname = "object.import_result2dh_color_iric2blender"
-    bl_label = "3-1-1: Nays2dhの計算結果(水深/Color)の読み込み"
-    bl_description = "3-1-1: Nays2dhの計算結果(水深/Color)の読み込み"
+    bl_label = bpy.app.translations.pgettext("3-1-1: import calculation data of Nays2dh (Depth / Color)")
+    bl_description = bpy.app.translations.pgettext("3-1-1: import calculation data of Nays2dh (Depth / Color)")
+
     bl_options = {'REGISTER', 'UNDO'}
 
     # ファイル指定のプロパティを定義する
-    # filepath, filename, directory の名称のプロパティを用意しておくと
-    # window_manager.fileselect_add 関数から情報が代入される
     filepath: StringProperty(
         name="File Path",      # プロパティ名
         default="",            # デフォルト値
@@ -53,12 +52,9 @@ class ImportResult2DH_Color_iRIC2blender(bpy.types.Operator):
     def execute(self, context):
 
         #### main ####
-        # active_obj = context.active_object
 
         # ファイルパスをフォルダパスとファイル名に分割する
         filepath_folder, filepath_name = os.path.split(self.filepath)
-        # ファイルパスをフォルダ名の名称とファイル名の拡張子に分割する
-        # filepath_nameonly, filepath_ext = os.path.splitext(filepath_name)
 
         #3d View 範囲の終了設定
         N001_lib.config_viewports()
@@ -73,15 +69,7 @@ class ImportResult2DH_Color_iRIC2blender(bpy.types.Operator):
         mat_list    = material.set_material(mat_list,color_set)
         result_type = "depth"
 
-
-
         ws = N001_lib.Make_WaterSurface_depth_velocity_from_iRIC_result(df_col_list,usecols,filepath_folder,mat_list,color_set,result_type)
         ws.create_mesh_result()
-
-        # #frame_numを1に指定
-        # bpy.context.scene.frame_set(1)
-
-        # #選択したオブジェクト視点をあわせる
-        # N001_lib.framein_to_selected_object(obj_name ='2_iRIC_result')
 
         return {'FINISHED'}

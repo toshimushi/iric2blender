@@ -5,22 +5,23 @@ import os
 from os import path
 import numpy as np
 from mathutils import Vector
-import pyproj
-from staticmap import StaticMap
-import matplotlib.pyplot as plt
-
+try:
+    import pyproj
+    from staticmap import StaticMap
+    import matplotlib.pyplot as plt
+except:
+    pass
 
 # iricの計算結果をblenderのimport
 class Import_Image_from_Grid_iRIC2blender(bpy.types.Operator):
     #ラベル名の宣言
     bl_idname = "object.import_image_from_grid_iric2blender"
-    bl_label = "1-1-2: iRIC格子(csv)から画像をダウンロード"
-    bl_description = "1-1-2: iRIC格子(csv)から画像をダウンロード"
+    bl_label = bpy.app.translations.pgettext("1-1-2: download image from iRIC grid(csv)")
+    bl_description = bpy.app.translations.pgettext("1-1-2: download image from iRIC grid(csv)")
+
     bl_options = {'REGISTER', 'UNDO'}
 
     # ファイル指定のプロパティを定義する
-    # filepath, filename, directory の名称のプロパティを用意しておくと
-    # window_manager.fileselect_add 関数から情報が代入される
     filepath: StringProperty(
         name="File Path",      # プロパティ名
         default="",            # デフォルト値
@@ -61,12 +62,9 @@ class Import_Image_from_Grid_iRIC2blender(bpy.types.Operator):
         def read_file(readfile):
             #３行目以降を読み込みdfとする
             df = np.loadtxt(readfile, delimiter=',',skiprows=3)
-            # df = np.loadtxt(readfile, delimiter=',',skiprows=3, usecols=[0,1,2,3,4,5,6,7,8,9,10,11])
             return df
 
         def use_pyproj(x_lon, y_lat, EPSG_before, EPSG_after):
-            # x_lon = a_np[:,:1] #35.6
-            # y_lat = a_np[:,1:2] #139.7
             EPSG_before = pyproj.Proj(f"+init=EPSG:{EPSG_before}")
             EPSG_after = pyproj.Proj(f"+init=EPSG:{EPSG_after}")
             y_lat_a, x_lon_a = pyproj.transform(EPSG_before, EPSG_after, x_lon, y_lat)
@@ -78,9 +76,6 @@ class Import_Image_from_Grid_iRIC2blender(bpy.types.Operator):
             return center
 
         def center_lonlat2(a_np):
-            # [[x_max,y_max],[x_min,y_min]]
-            # a_np_a = np.average(a_np, axis = 0)
-            # center = [a_np_a[1],a_np_a[0]]
             center = [(a_np[0][0] + a_np[1][0])/2.,(a_np[0][1] + a_np[1][1])/2.]
             return center
 
@@ -108,29 +103,11 @@ class Import_Image_from_Grid_iRIC2blender(bpy.types.Operator):
 
 
         def simple_map(np_center,zoom1, dpi1 ,x_tile, y_tile, filepath_folder,image_url):
-              # url=["https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg",
-            #      "http://cyberjapandata.gsi.go.jp/xyz/dem/{z}/{x}/{y}.txt",
-            #      "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"]
 
-            # url = {
-            #        'chiriin_seamlessphoto'    : "https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg",
-            #        'chiriin_nendophoto'       : "https://cyberjapandata.gsi.go.jp/xyz/nendophoto2019/{z}/{x}/{y}.png",
-            #        'gazo4'                    : "https://cyberjapandata.gsi.go.jp/xyz/gazo4/{z}/{x}/{y}.jpg",
-            #        'ort_USA10'                : "https://cyberjapandata.gsi.go.jp/xyz/ort_USA10/{z}/{x}/{y}.png",
-            #        'ort'                      : "https://cyberjapandata.gsi.go.jp/xyz/ort/{z}/{x}/{y}.jpg",
-            #        'google_satellite'         : 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-            #        'google_satellite_hybrid'  : 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
-            #        }
-
-            # 地理院地図タイル 横1280x縦720
-            # map = StaticMap(x_tile, y_tile, url_template=url["chiriin_seamlessphoto"])
-            # map = StaticMap(x_tile, y_tile, url_template=url["google_satellite"])
             map = StaticMap(x_tile, y_tile, url_template=image_url)
-
 
             # ズームレベル12、中心画像は「東経, 北緯」→PILのインスタンスとして返ってくる
             img = map.render(zoom=zoom1, center=np_center)
-            # img = map.render(zoom=18, center=[143.202056, 42.918])
 
             # 表示
             plt.gca().spines['right'].set_visible(False)
@@ -141,7 +118,7 @@ class Import_Image_from_Grid_iRIC2blender(bpy.types.Operator):
             plt.tick_params(labelbottom=False, labelleft=False, labelright=False, labeltop=False, bottom=False, left=False, right=False, top=False)
             plt.subplots_adjust(left=0, right=1, bottom=0, top=1)
             plt.imshow(img)
-            # plt.show()
+
             save_filename=f"{filepath_folder}/iric_image_{zoom1}_{dpi1}.tiff"
             plt.savefig(save_filename, dpi=dpi1,bbox_inches='tight',pad_inches=0 )
 
@@ -163,23 +140,12 @@ class Import_Image_from_Grid_iRIC2blender(bpy.types.Operator):
             img = map.render(zoom=zoom1, center=np_center)
             print(img)
 
-        def openstreetmap_building():
-            """https://osmbuildings.org/documentation/data/"""
-            """https://data.osmbuildings.org/0.2/anonymous/tile/15/17605/10743.json"""
-            """https://data.osmbuildings.org/0.2/anonymous/tile/15/{x}/{y}.json"""
-
 
         def Lon2Tile(lon,zoom):
-
             return ((lon + 180) / 360) * pow(2, zoom);
 
 
-
-
         def latlon2tile(x_lon, y_lat, zoom):
-            # x = int((x_lon / 180 + 1) * 2**zoom / 2) # x座標
-            # y = int(((-np.log(np.tan((45 + y_lat / 2) * np.pi / 180)) + np.pi) * 2**zoom / (2 * np.pi))) # y座標
-
             x = int((x_lon / 180 + 1) * 2**(zoom+8) / 2) # x座標
             y = int(((-np.log(np.tan((45 + y_lat / 2) * np.pi / 180)) + np.pi) * 2**(zoom+8) / (2 * np.pi))) # y座標
 
@@ -187,9 +153,6 @@ class Import_Image_from_Grid_iRIC2blender(bpy.types.Operator):
 
         def latlon2tile2(x_lon, y_lat, zoom):
             """openstreetmap用"""
-            # x = int((x_lon / 180 + 1) * 2**zoom / 2) # x座標
-            # y = int(((-np.log(np.tan((45 + y_lat / 2) * np.pi / 180)) + np.pi) * 2**zoom / (2 * np.pi))) # y座標
-
             x = int((x_lon / 180 + 1) * 2**(zoom) / 2) # x座標
             y = int(((-np.log(np.tan((45 + y_lat / 2) * np.pi / 180)) + np.pi) * 2**(zoom) / (2 * np.pi))) # y座標
 
@@ -274,19 +237,9 @@ class Import_Image_from_Grid_iRIC2blender(bpy.types.Operator):
             import json
             import requests
 
-            # def config():
-            #     url = f"https://data.osmbuildings.org/0.2/anonymous/tile/15/{x}/{y}.json"
-            #     agentheader={'User-Agent': 'PostmanRuntime/7.28.4'}
-            #     return url,agentheader
-            #
-            # url, agentheader = config()
-
             agentheader={'User-Agent': 'PostmanRuntime/7.28.4'}
             response = requests.get(url,headers = agentheader)
-            # print(response.status_code)
-            # print(response.text)
             data = json.loads(response.text)
-            # print(data["features"])
             return data
 
 
@@ -308,9 +261,7 @@ class Import_Image_from_Grid_iRIC2blender(bpy.types.Operator):
             return array2
 
 
-
         ################
-        # active_obj = context.active_object
 
 
         # ファイルパスをフォルダパスとファイル名に分割する
@@ -323,19 +274,6 @@ class Import_Image_from_Grid_iRIC2blender(bpy.types.Operator):
         dpi  = bpy.context.scene.dl_image_dpi_prop_int
         EPSG_before = bpy.context.scene.dl_image_epsg_prop_int
         EPSG_after="4326"
-
-        # url = {
-        #         'chiriin_seamlessphoto'    : "https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg",
-        #         'chiriin_nendophoto'       : "https://cyberjapandata.gsi.go.jp/xyz/nendophoto2019/{z}/{x}/{y}.png",
-        #         'gazo4'                    : "https://cyberjapandata.gsi.go.jp/xyz/gazo4/{z}/{x}/{y}.jpg",
-        #         'ort_USA10'                : "https://cyberjapandata.gsi.go.jp/xyz/ort_USA10/{z}/{x}/{y}.png",
-        #         'ort'                      : "https://cyberjapandata.gsi.go.jp/xyz/ort/{z}/{x}/{y}.jpg",
-        #         'google_satellite'         : 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-        #         'google_satellite_hybrid'  : 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
-        #         }
-        #
-        # image_url=url["google_satellite"]
-
 
         url = {
                 1  : 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',

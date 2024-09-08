@@ -10,8 +10,8 @@ from mathutils import Vector
 class Attached_to_Surface(bpy.types.Operator):
     #ラベル名の宣言
     bl_idname = "object.attached_to_sureface"
-    bl_label = "2-3-1: 選択したオブジェクトを接地"
-    bl_description = "2-3-1: 選択したオブジェクトを接地"
+    bl_label = bpy.app.translations.pgettext("2-3-1: attach the selected object to mesh surface")
+    bl_description = bpy.app.translations.pgettext("2-3-1: attach the selected object to mesh surface")
     bl_options = {'REGISTER', 'UNDO'}
 
 
@@ -29,7 +29,6 @@ class Attached_to_Surface(bpy.types.Operator):
                 h_brdg_list=[]
                 for v in ob.data.vertices:
                     brdg_location=ob.matrix_world.inverted() @v.co
-                    # brdg_location=ob.matrix_world.inverted() @v.co*-1
 
                     h_brdg_list.append(brdg_location[2])
                 h_brdg=np.sqrt((max(h_brdg_list)-min(h_brdg_list))**2)
@@ -58,7 +57,6 @@ class Attached_to_Surface(bpy.types.Operator):
 
                 #オブジェクトの高さを接地面の高さに反映
                 try:
-                    # ob.location[2]=min(obz_surface)+(h_brdg*0.5)
                     ob.location[2]=min(obz_surface)
 
                 except:
@@ -67,7 +65,6 @@ class Attached_to_Surface(bpy.types.Operator):
 
 
         #####
-        # active_obj = context.active_object
 
         obs = bpy.context.selected_objects #選択したオブジェクト
 

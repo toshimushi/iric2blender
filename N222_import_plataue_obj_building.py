@@ -10,13 +10,11 @@ from . import N001_lib
 class Import_Plataue_Obj_Buidling(bpy.types.Operator):
     #ラベル名の宣言
     bl_idname = "object.import_plataue_obj_building"
-    bl_label = "2-2-2: Plateau 建物データ(obj)を読み込み"
-    bl_description = "2-2-2: Plateau 建物データ(obj)を読み込み"
+    bl_label = bpy.app.translations.pgettext("2-2-2: import building data (obj) from Plateau")
+    bl_description = bpy.app.translations.pgettext("2-2-2: import building data (obj) from Plateau")
     bl_options = {'REGISTER', 'UNDO'}
 
     # ファイル指定のプロパティを定義する
-    # filepath, filename, directory の名称のプロパティを用意しておくと
-    # window_manager.fileselect_add 関数から情報が代入される
     filepath: StringProperty(
         name="File Path",      # プロパティ名
         default="",            # デフォルト値
@@ -82,6 +80,7 @@ class Import_Plataue_Obj_Buidling(bpy.types.Operator):
 
         # ファイルパスをフォルダパスとファイル名に分割する
         filepath_folder, filepath_name = os.path.split(self.filepath)
+        
         # ファイルパスをフォルダ名の名称とファイル名の拡張子に分割する
         filepath_nameonly, filepath_ext = os.path.splitext(filepath_name)
 

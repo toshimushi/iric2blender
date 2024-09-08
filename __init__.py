@@ -22,12 +22,12 @@
 bl_info = {
     "name": "iric2blender",
     "author": "toshimushi",
-    "version": (0, 1),
-    "blender": (3, 2, 2),
+    "version": (0, 2),
+    "blender": (4, 2, 0),
     "location": "3Dビュー > オブジェクト",
-    "description": "iRICとblenderの相互連携用アドオン",
+    "description": "Add-on for mutual cooperation between iRIC and blender",
     "warning": "",
-    "support": "TESTING",
+    "support": "alpha",
     "wiki_url": "",
     "tracker_url": "",
 	'category': '3D View'
@@ -58,6 +58,9 @@ if "bpy" in locals():
     imp.reload(N410_export_tpo2iric)
     imp.reload(N420_export_building2iric)
     imp.reload(material)
+    imp.reload(N002_multi_language_dictionary)
+
+    
 
 else:
     from . import N111_import_grid_iric2blender
@@ -79,12 +82,16 @@ else:
     from . import N410_export_tpo2iric
     from . import N420_export_building2iric
     from . import material
+    from . import N002_multi_language_dictionary
+    
 
 
 
 #### main ####
 import bpy
 from bpy.props import *
+from bpy.props import IntProperty, IntVectorProperty,StringProperty
+
 
 
 # サイドパネル(iRIC_setting)のインタフェース等の設定
@@ -110,63 +117,119 @@ class IRICSETTING_PT_CustomPanel(bpy.types.Panel):
 
         # コンターの水深の設定
         layout.separator()
-        layout.label(text="コンターの水深の設定:")
+        # layout.label(text="コンターの水深の設定:")
+        layout.label(text = bpy.app.translations.pgettext("color contour depth setting:"))
         layout.prop(scene, "max_depth_prop_float", text="max_depth")
         layout.prop(scene, "min_depth_prop_float", text="min_depth")
 
+
         # コンターの流速の設定
         layout.separator()
-        layout.label(text="コンターの流速の設定:")
+        # layout.label(text="コンターの流速の設定:")
+        layout.label(text = bpy.app.translations.pgettext("color contour depth setting:"))
+
         layout.prop(scene, "max_velocity_prop_float", text="max_velocity")
         layout.prop(scene, "min_velocity_prop_float", text="min_velocity")
 
 
         # 水の色の設定
         layout.separator()
-        layout.label(text="水の色の設定:")
+        # layout.label(text="水の色の設定:")
+        layout.label(text = bpy.app.translations.pgettext("water color setting:"))
+
         layout.prop(scene, "water_color_prop_floatv", text="water_color")
         layout.separator()
 
         # 水の粗さの設定
         layout.separator()
-        layout.label(text="水面の粗さの設定:")
+        # layout.label(text="水面の粗さの設定:")
+        layout.label(text = bpy.app.translations.pgettext("water surface texture roughness setting:"))
         layout.prop(scene, "water_roughness_prop_float", text="water_roughness")
 
         # 水の反射の設定
         layout.separator()
-        layout.label(text="水面の反射の設定:")
+        # layout.label(text="水面の反射の設定:")
+        layout.label(text = bpy.app.translations.pgettext("water surface texture reflection setting:"))
         layout.prop(scene, "water_metalic_prop_float", text="water_metalic")
 
         # 水の透過の設定
         layout.separator()
-        layout.label(text="水面の透過の設定:")
+        # layout.label(text="水面の透過の設定:")
+        layout.label(text = bpy.app.translations.pgettext("water surface texture transparency setting:"))
         layout.prop(scene, "water_alpha_prop_float", text="water_alpha")
 
         # 画像読み込み設定
         layout.separator()
         layout.separator()
-        layout.label(text="画像読み込み関係")
-        layout.label(text="DL画像のzoomの設定:")
+        # layout.label(text="画像読み込み関係")
+        layout.label(text = bpy.app.translations.pgettext("image import setting:"))
+        # layout.label(text="DL画像のzoomの設定:")
+        layout.label(text = bpy.app.translations.pgettext("download image zoom level setting"))
         layout.prop(scene, "dl_image_zoom_prop_int", text="zoom")
 
         layout.separator()
-        layout.label(text="DL画像の解像度の設定:")
+        # layout.label(text="DL画像の解像度の設定:")
+        layout.label(text = bpy.app.translations.pgettext("download image resolution setting"))
         layout.prop(scene, "dl_image_dpi_prop_int", text="dpi")
 
         layout.separator()
-        layout.label(text="格子のEPSGの設定:")
+        layout.label(text = bpy.app.translations.pgettext("grid EPSG setting"))
+        # layout.label(text="格子のEPSGの設定:")
         layout.prop(scene, "dl_image_epsg_prop_int", text="epsg")
 
         layout.separator()
-        layout.label(text="読み込み画像の設定:")
-        layout.label(text="1:google衛星画像")
+        # layout.label(text="読み込み画像の設定:")
+        layout.label(text = bpy.app.translations.pgettext("image download destination setting"))
+
+        # layout.label(text="1:google衛星画像")
+        layout.label(text = bpy.app.translations.pgettext("1:google satelite image"))
         layout.label(text="2:google hybrid")
-        layout.label(text="3:国土地理院オルソ画像")
+        # layout.label(text="3:国土地理院オルソ画像")
+        layout.label(text = bpy.app.translations.pgettext("3:GSI ortho image"))
         layout.prop(scene, "dl_image_url_prop_int", text="url")
 
-        layout.separator()
-        layout.label(text="木の種類の設定:")
-        layout.prop(scene, "dl_tree_type_prop_int", text="tree")
+
+# # プリファレンスのアドオン設定情報
+class Set_Preferences(bpy.types.AddonPreferences):
+    bl_idname = __name__
+
+    # Define the file path property
+    file_path: StringProperty(
+        name="filepath",
+        description="filepath site-package",
+        subtype='FILE_PATH',
+        default="",
+    )
+
+    def draw(self, context):
+        layout = self.layout
+
+        # File Path Property
+        layout.prop(self, "file_path", text=bpy.app.translations.pgettext("Site-package File Path"))
+
+        # アドオンのプリファレンスにアクセス
+        prefs = context.preferences.addons[__name__].preferences
+
+        def check_library():
+            try:
+                import pyproj
+                return True
+            except ImportError:
+                return False
+
+
+        result = check_library()
+
+        if result:
+            print("pyproj is installed")
+            
+        else:  
+            import sys
+            site_packages_path = prefs.file_path #プリファレンスで指定したパスをパスに追加
+            sys.path.append(site_packages_path)
+
+        result = check_library()
+
 
 #############
 # サイドパネル(iRIC_setting)のプロパティの初期化
@@ -313,13 +376,14 @@ class VIEW3D_MT_menu_iric(bpy.types.Menu):
 				self.layout.operator(c.bl_idname)
 
 		layout.separator()
+
 		#メニューに表示するclass名の登録
 		for c in clases:
-			# self.layout.operator(c.bl_idname)
 			if c == "separator":
 				layout.separator()
 			else:
 				self.layout.menu(c.bl_idname)
+
 		layout.separator()
 
 
@@ -349,8 +413,17 @@ clases=[N111_import_grid_iric2blender.ImportGrid_iRIC2blender,
 		]
 
 
-clases_panel=[IRICSETTING_PT_CustomPanel
-			  ]
+
+def add_gis_menu(self, context):
+	if context.mode == 'OBJECT':
+		self.layout.menu('VIEW3D_MT_menu_iric')
+
+
+
+clases_panel=[
+              Set_Preferences,
+              IRICSETTING_PT_CustomPanel,
+              ]
 
 
 menus=[VIEW3D_MT_menu_iric,
@@ -377,43 +450,68 @@ menus=[VIEW3D_MT_menu_iric,
 
 
 
-def add_gis_menu(self, context):
-	if context.mode == 'OBJECT':
-		self.layout.menu('VIEW3D_MT_menu_iric')
-
 
 #アドオンの登録設定
 def register():
+
     init_props()
+
+    from . import N002_multi_language_dictionary
+
+
+    # 翻訳辞書の登録
+    try:
+        bpy.app.translations.register(__name__, N002_multi_language_dictionary.translation_dict)
+    except ValueError as e:
+        try:
+            bpy.app.translations.remove(__name__, N002_multi_language_dictionary.translation_dict)
+            bpy.app.translations.register(__name__, N002_multi_language_dictionary.translation_dict)
+        except:
+             pass
+
+    #menus
+    try:
+        bpy.types.VIEW3D_MT_editor_menus.append(add_gis_menu)
+    except ValueError as e:
+        bpy.types.VIEW3D_MT_editor_menus.remove(add_gis_menu)
+        bpy.types.VIEW3D_MT_editor_menus.append(add_gis_menu)
+
+
 
     for menu in menus:
         try:
             bpy.utils.register_class(menu)
         except ValueError as e:
-            logger.warning('{} is already registered, now unregister and retry... '.format(menu))
             bpy.utils.unregister_class(menu)
             bpy.utils.register_class(menu)
+
+
     for c in clases_panel:
         try:
             bpy.utils.register_class(c)
         except ValueError as e:
-            logger.warning('{} is already registered, now unregister and retry... '.format(menu))
             bpy.utils.unregister_class(c)
             bpy.utils.register_class(c)
-
-    #menus
-    bpy.types.VIEW3D_MT_editor_menus.append(add_gis_menu)
 
 
 
 def unregister():
+    #アドオンの翻訳データを解除
+    bpy.app.translations.unregister(__name__)
+
+    # メニューの削除
     bpy.types.VIEW3D_MT_editor_menus.remove(add_gis_menu)
     clear_props()
 
+    # メニュークラスの登録解除
     for menu in menus:
         bpy.utils.unregister_class(menu)
+
+    # パネルクラスの登録解除
     for c in clases_panel:
         bpy.utils.unregister_class(c)
+
+
 
 
 ######

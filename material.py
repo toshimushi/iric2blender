@@ -1,4 +1,40 @@
 import bpy
+# from . import N002_multi_language_dictionary
+# # 翻訳辞書の登録
+# bpy.app.translations.register(__name__, N002_multi_language_dictionary.translation_dict)
+
+
+# def materials_grid():
+#     """gridのマテリアルを定義"""
+#     # # 新規マテリアルを作成
+#     mat_el = bpy.data.materials.new('grid_material')
+#
+#     # Use Nodesをオンにする
+#     mat_el.use_nodes = True
+#
+#     # Node Treeにアクセス
+#     node_tree = mat_el.node_tree
+#
+#     # Material Outputノードにアクセス
+#     output = node_tree.nodes['Material Output']
+#
+#     # Principled BSDFにアクセス
+#     p_bsdf = node_tree.nodes['Principled BSDF']
+#
+#     # Blend ModeをAlpha Blendに設定
+#     mat_el.blend_method = 'BLEND'
+#
+#     # # 色を茶色に設定
+#     # # p_bsdf.inputs['Base Color'].default_value = (0.0, 0.0, 1.0, 1.0)
+#     # p_bsdf.inputs['Base Color'].default_value = (0.367,0.123,0.012, 1.0)
+#
+#     #粗さ（地面は光が反射しないため粗い方(1に近い方)がよい）
+#     p_bsdf.inputs[9].default_value = 1.
+#
+#     # # アルファチャンネル（透明度）の値を0.1に設定
+#     # p_bsdf.inputs['Alpha'].default_value = 0.9
+#
+#     return mat_gl
 
 
 def materials_elevation():
@@ -131,6 +167,8 @@ def set_material(mat_list,color_set):
 
             # Principal BSDFの立ち上げ
             pBSDF = material.node_tree.nodes["Principled BSDF"]
+            # pBSDF = material.node_tree.nodes["プリンシプルBSDF"]
+            # pBSDF = material.node_tree.nodes[bpy.app.translations.pgettext("Principled BSDF")]
 
             # 色を設定
             pBSDF.inputs[0].default_value = (l_color[0],l_color[1],l_color[2],1)
@@ -180,6 +218,8 @@ def set_material_v(mat_list_v,color_set_v):
 
             # Principal BSDFの立ち上げ
             pBSDF = material.node_tree.nodes["Principled BSDF"]
+            # pBSDF = material.node_tree.nodes[bpy.app.translations.pgettext("Principled BSDF")]
+            
 
             # 色を設定
             pBSDF.inputs[0].default_value = (l_color[0],l_color[1],l_color[2],1)
@@ -230,7 +270,8 @@ def set_material_blue(mat_list,color_set):
             # report({'INFO'}, str("l_color:")+str(l_color))
 
             # Principal BSDFの立ち上げ
-            pBSDF = material.node_tree.nodes["Principled BSDF"]
+            # pBSDF = material.node_tree.nodes["Principled BSDF"]
+            pBSDF = material.node_tree.nodes[bpy.app.translations.pgettext("Principled BSDF")]
 
             # 色を設定
             pBSDF.inputs[0].default_value = (l_color[0],l_color[1],l_color[2],1)
@@ -295,6 +336,7 @@ def mofifiers_on(obj):
 
 def voronoi_on(obj):
     #モディファイヤーを追加。DISPLACEのVoronoiを追加。水面のさざなみを表現
+    """https://ja.blingin.in/blender_threads/questions/118250/link-a-texture-to-displace-modifier-using-python"""
     tex = bpy.data.textures.new("Voronoi", 'VORONOI')
     tex.distance_metric = 'DISTANCE_SQUARED'
     modifier = obj.modifiers.new(name="Displace", type='DISPLACE')

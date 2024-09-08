@@ -7,13 +7,13 @@ from . import N001_lib
 class Import_OsmBuilding2blender(bpy.types.Operator):
     #ラベル名の宣言
     bl_idname = "object.import_osm_building2blender"
-    bl_label = "2-1-2: OSMBuildingから建物データを読み込み"
-    bl_description = "2-1-2: OSMBuildingから建物データを読み込み"
+    bl_label = bpy.app.translations.pgettext("2-1-2: import building data from OSMBuilding downloaded data")
+    bl_description = bpy.app.translations.pgettext("2-1-2: import building data from OSMBuilding downloaded data")
+
+
     bl_options = {'REGISTER', 'UNDO'}
 
     # ファイル指定のプロパティを定義する
-    # filepath, filename, directory の名称のプロパティを用意しておくと
-    # window_manager.fileselect_add 関数から情報が代入される
     filepath: StringProperty(
         name="File Path",      # プロパティ名
         default="",            # デフォルト値
@@ -54,6 +54,7 @@ class Import_OsmBuilding2blender(bpy.types.Operator):
 
         # ファイルパスをフォルダパスとファイル名に分割する
         filepath_folder, filepath_name = os.path.split(self.filepath)
+
         # ファイルパスをフォルダ名の名称とファイル名の拡張子に分割する
         filepath_nameonly, filepath_ext = os.path.splitext(filepath_name)
 
@@ -99,7 +100,6 @@ class Import_OsmBuilding2blender(bpy.types.Operator):
 
             j=0
             for i in obj_list:
-                # obj_name=f"bdg_{j}_{df[j][4]}"
                 obj_name=f"bdg_{j}_{bld_name[j]}"
 
                 #建物objectの生成
@@ -132,7 +132,6 @@ class Import_OsmBuilding2blender(bpy.types.Operator):
                     obj3.append(obj2)
                     obj2=[]
                     bld_name.append(df[i][4])
-                    # print("#####")
 
                 if df[i][5] >= min_building_h:
                     obj1=[df[i][2],df[i][3],df[i][5]]

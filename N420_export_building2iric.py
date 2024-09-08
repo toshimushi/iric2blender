@@ -6,13 +6,13 @@ from os import path
 class ExportBuilding2iRIC(bpy.types.Operator):
     #ラベル名の宣言
     bl_idname = "object.export_building2iric"
-    bl_label = "4-2: OSMBuildingの建物をshpに書き出し"
-    bl_description = "4-2: OSMBuildingの建物をshpに書き出し"
+    bl_label = bpy.app.translations.pgettext("4-2: export shp building data from OSMBuilding for iRIC")
+    bl_description = bpy.app.translations.pgettext("4-2: export shp building data from OSMBuilding for iRIC")        
+
+
     bl_options = {'REGISTER', 'UNDO'}
 
     # ファイル指定のプロパティを定義する
-    # filepath, filename, directory の名称のプロパティを用意しておくと
-    # window_manager.fileselect_add 関数から情報が代入される
     filepath: StringProperty(
         name="File Path",      # プロパティ名
         default="",            # デフォルト値
@@ -50,7 +50,6 @@ class ExportBuilding2iRIC(bpy.types.Operator):
         def write_list2csv(write_list,filename):
             """書き込み"""
             f = open(filename, 'w', encoding='UTF-8')
-            # print(write_list)
             f.writelines(write_list)
             f.close()
 
@@ -63,11 +62,8 @@ class ExportBuilding2iRIC(bpy.types.Operator):
 
             for i in range(len(bpy.context.selected_objects)):
                 v=bpy.context.selected_objects[i]
-                # print(v.name)
-                # print(bpy.data.objects[0].data.vertices[1].co)
                 for j in range(int(len(v.data.vertices)/2.)):
                     vv=v.data.vertices[j]
-                    # print(f"{i},{j},{vv.co[0]},{vv.co[1]},{v.name},1\n")
                     write_list_out.append(f"{i},{j},{vv.co[0]},{vv.co[1]},{v.name},1\n")
 
             #書き込み
@@ -79,6 +75,7 @@ class ExportBuilding2iRIC(bpy.types.Operator):
 
         # ファイルパスをフォルダパスとファイル名に分割する
         filepath_folder, filepath_name = os.path.split(self.filepath)
+        
         # ファイルパスをフォルダ名の名称とファイル名の拡張子に分割する
         filepath_nameonly, filepath_ext = os.path.splitext(filepath_name)
 

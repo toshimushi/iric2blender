@@ -7,13 +7,11 @@ from os import path
 class ExportTpo2iRIC(bpy.types.Operator):
     #ラベル名の宣言
     bl_idname = "object.export_tpo2iric"
-    bl_label = "4-1: 地形データをiRIC用にCSVで書き出し"
-    bl_description = "4-1: 地形データをiRIC用にCSVで書き出し"
+    bl_label = bpy.app.translations.pgettext("4-1: export csv topography data for iRIC")
+    bl_description = bpy.app.translations.pgettext("4-1: export csv topography data for iRIC")        
     bl_options = {'REGISTER', 'UNDO'}
 
     # ファイル指定のプロパティを定義する
-    # filepath, filename, directory の名称のプロパティを用意しておくと
-    # window_manager.fileselect_add 関数から情報が代入される
     filepath: StringProperty(
         name="File Path",      # プロパティ名
         default="",            # デフォルト値
@@ -48,6 +46,7 @@ class ExportTpo2iRIC(bpy.types.Operator):
 
         # ファイルパスをフォルダパスとファイル名に分割する
         filepath_folder, filepath_name = os.path.split(self.filepath)
+
         # ファイルパスをフォルダ名の名称とファイル名の拡張子に分割する
         filepath_nameonly, filepath_ext = os.path.splitext(filepath_name)
 
@@ -59,7 +58,6 @@ class ExportTpo2iRIC(bpy.types.Operator):
         for v in active_obj.data.vertices:
             write_list.append(f"{v.co[0]},{v.co[1]},{v.co[2]}\n")
             i+=1
-        # print(write_list)
         f.writelines(write_list)
         f.close()
         self.report({'INFO'}, str("地形データ(out_tpo_blender2iric.csv)を保存しました。")+str(filepath_folder))

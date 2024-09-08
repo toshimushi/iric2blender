@@ -8,13 +8,11 @@ from . import N001_lib
 class ImportGrid_iRIC2blender(bpy.types.Operator):
     #ラベル名の宣言
     bl_idname = "object.import_grid_iric2blender"
-    bl_label = "1-1-1: iRIC格子(csv)の読み込み"
-    bl_description = "1-1-1: iRIC格子(csv)の読み込み"
+    bl_label = bpy.app.translations.pgettext("1-1-1: import iRIC grid(csv)")
+    bl_description = bpy.app.translations.pgettext("1-1-1: import iRIC grid(csv)")
     bl_options = {'REGISTER', 'UNDO'}
 
     # ファイル指定のプロパティを定義する
-    # filepath, filename, directory の名称のプロパティを用意しておくと
-    # window_manager.fileselect_add 関数から情報が代入される
     filepath: StringProperty(
         name="File Path",      # プロパティ名
         default="",            # デフォルト値
@@ -41,7 +39,6 @@ class ImportGrid_iRIC2blender(bpy.types.Operator):
 
     # 実行時イベント(Gridの読み込みのフォルダの選択)
     def invoke(self, context, event):
-        # ファイルエクスプローラーを表示する
         self.report({'INFO'}, "保存先のフォルダを指定してください")
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
@@ -57,7 +54,6 @@ class ImportGrid_iRIC2blender(bpy.types.Operator):
         def make_mesh_grid_from_iric_grid_csv(filepath):
             # iricのcsvファイル(地盤データ:elevation)からオブジェクトを作成
             df,MI,MJ = N001_lib.read_file(readfile=filepath,usecols=None)
-            # obj= N001_lib.make_ojb_each_files(df,MI,MJ,df_row_n=6,obj_name=f"iRIC_Grid_Elevation")
 
             df = df[:, [3, 4, 6]] #grid
             obj_name=f"iRIC_Grid_Elevation"
@@ -109,7 +105,6 @@ class ImportGrid_iRIC2blender(bpy.types.Operator):
                 bpy.context.object.name=f"grid_corner{i}"
 
                 # 現在のシーンにコレクションをリンク
-                # my_sub_coll.objects.link(obj)
                 bpy.context.scene.collection.children['iRIC_Grid'].objects.link(bpy.context.object)
 
 
@@ -127,6 +122,7 @@ class ImportGrid_iRIC2blender(bpy.types.Operator):
 
         # ファイルパスをフォルダパスとファイル名に分割する
         filepath_folder, filepath_name = os.path.split(self.filepath)
+
         # ファイルパスをフォルダ名の名称とファイル名の拡張子に分割する
         filepath_nameonly, filepath_ext = os.path.splitext(filepath_name)
 

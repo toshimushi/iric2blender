@@ -8,13 +8,12 @@ import os
 class ImportResult2DH_velocity_Color_iRIC2blender(bpy.types.Operator):
     #ラベル名の宣言
     bl_idname = "object.import_result2dh_velocity_color_iric2blender"
-    bl_label = "3-1-2: Nays2dhの計算結果(流速/Color)の読み込み"
-    bl_description = "3-1-2: Nays2dhの計算結果(流速/Color)の読み込み"
+    bl_label = bpy.app.translations.pgettext("3-1-2: import calculation data of Nays2dh (Velocity / Color)")
+    bl_description = bpy.app.translations.pgettext("3-1-2: import calculation data of Nays2dh (Velocity / Color)")
+
     bl_options = {'REGISTER', 'UNDO'}
 
     # ファイル指定のプロパティを定義する
-    # filepath, filename, directory の名称のプロパティを用意しておくと
-    # window_manager.fileselect_add 関数から情報が代入される
     filepath: StringProperty(
         name="File Path",      # プロパティ名
         default="",            # デフォルト値
@@ -52,12 +51,9 @@ class ImportResult2DH_velocity_Color_iRIC2blender(bpy.types.Operator):
     def execute(self, context):
 
         #### main ####
-        # active_obj = context.active_object
 
         # ファイルパスをフォルダパスとファイル名に分割する
         filepath_folder, filepath_name = os.path.split(self.filepath)
-        # ファイルパスをフォルダ名の名称とファイル名の拡張子に分割する
-        # filepath_nameonly, filepath_ext = os.path.splitext(filepath_name)
 
         #3d View 範囲の終了設定
         N001_lib.config_viewports()

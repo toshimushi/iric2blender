@@ -1,26 +1,26 @@
 import bpy
 import numpy as np
-import pyproj
 from bpy.props import FloatVectorProperty, StringProperty
 import json
 import requests
 import os
 from os import path
+try:
+    import pyproj
+except:
+    pass
 
-
-# from . import material
 
 # iricの計算結果をblenderのimport
 class Download_OsmBuilding(bpy.types.Operator):
     #ラベル名の宣言
     bl_idname = "object.download_osm_building"
-    bl_label = "2-1-1: OSMBuildingから建物データをダウンロード"
-    bl_description = "2-1-1: OSMBuildingから建物データをダウンロード"
+    bl_label = bpy.app.translations.pgettext("2-1-1: download building data from OSMBuilding")
+    bl_description = bpy.app.translations.pgettext("2-1-1: download building data from OSMBuilding")
+
     bl_options = {'REGISTER', 'UNDO'}
 
     # ファイル指定のプロパティを定義する
-    # filepath, filename, directory の名称のプロパティを用意しておくと
-    # window_manager.fileselect_add 関数から情報が代入される
     filepath: StringProperty(
         name="File Path",      # プロパティ名
         default="",            # デフォルト値
@@ -68,7 +68,6 @@ class Download_OsmBuilding(bpy.types.Operator):
                 i=i[::-1]
 
             for i in range(len(a_np_max_min)):
-                # a_np_max_min[i][1],a_np_max_min[i][0] = use_pyproj(a_np_max_min[i][1],a_np_max_min[i][0], "6677", "4326")
                 a_np_max_min[i][1],a_np_max_min[i][0] = use_pyproj(a_np_max_min[i][1],a_np_max_min[i][0], EPSG_before,EPSG_after)
                 
             return a_np_max_min
@@ -77,7 +76,6 @@ class Download_OsmBuilding(bpy.types.Operator):
         def read_file(readfile):
             #３行目以降を読み込みdfとする
             df = np.loadtxt(readfile, delimiter=',',skiprows=3)
-            # df = np.loadtxt(readfile, delimiter=',',skiprows=3, usecols=[0,1,2,3,4,5,6,7,8,9,10,11])
             return df
 
 
@@ -117,23 +115,16 @@ class Download_OsmBuilding(bpy.types.Operator):
 
 
         def latlon2tile2(x_lon, y_lat, zoom):
-            """openstreetmap用"""
-            # x = int((x_lon / 180 + 1) * 2**zoom / 2) # x座標
-            # y = int(((-np.log(np.tan((45 + y_lat / 2) * np.pi / 180)) + np.pi) * 2**zoom / (2 * np.pi))) # y座標
-
             x = int((x_lon / 180 + 1) * 2**(zoom) / 2) # x座標
             y = int(((-np.log(np.tan((45 + y_lat / 2) * np.pi / 180)) + np.pi) * 2**(zoom) / (2 * np.pi))) # y座標
 
             return x,y
 
-
         def make_url_list(array1,zoom):
             read_url=[]
             for x in range(array1[0][0],array1[0][1]):
                 for y in range(array1[1][0],array1[1][1]):
-                    # print(x,y)
                     read_url.append(f"https://data.osmbuildings.org/0.2/anonymous/tile/{zoom}/{x}/{y}.json")
-            # print(read_url)
             self.report({'INFO'}, f"read_url:{read_url}")
             return read_url
 
@@ -141,23 +132,17 @@ class Download_OsmBuilding(bpy.types.Operator):
         def make_building_data(read_url,EPSG_before,EPSG_after):
             n=0
             array2 = np.empty(0)
-            # bar = tqdm(total = len(read_url))
 
             for url in read_url:
                 try:
-                    # print(f"reading {url}")
                     json_data = load_osmbuildings_json(url)
                     array1,n = osmbuildings_json2building_npdata(json_data,n,EPSG_before,EPSG_after)
-                    # print(array1)
                 except:
                     print(f"read error {url}")
                     array1 = np.empty(0)
-                    # print(array1)
 
                 array2 = np.append(array2, array1, axis=0)
-                # bar.update(1)
 
-            # print("##",array2)
             self.report({'INFO'}, f"array2:{array2}")
             return array2
 
@@ -189,8 +174,6 @@ class Download_OsmBuilding(bpy.types.Operator):
                     array2 = np.append(array2, array1, axis=0)
                     k+=1
                 n+=1
-
-            # array2 = array2.reshape(-1, 5) #一次元配列から５次元配列へ変換（行数未指定-1）
             return array2,n
 
 
@@ -198,6 +181,7 @@ class Download_OsmBuilding(bpy.types.Operator):
         #######################
         # ファイルパスをフォルダパスとファイル名に分割する
         filepath_folder, filepath_name = os.path.split(self.filepath)
+
         # ファイルパスをフォルダ名の名称とファイル名の拡張子に分割する
         filepath_nameonly, filepath_ext = os.path.splitext(filepath_name)
 

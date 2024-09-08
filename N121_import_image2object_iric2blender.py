@@ -6,19 +6,16 @@ import numpy as np
 import math
 from . import N001_lib
 
-# from . import material
-
 # iricの計算結果をblenderのimport
 class Import_Image2Object_iRIC2blender(bpy.types.Operator):
     #ラベル名の宣言
     bl_idname = "object.import_image_iric2blender"
-    bl_label = "1-2-1: 画像をBlenderの格子に貼付"
-    bl_description = "1-2-1: 画像をBlenderの格子に貼付"
+    bl_label = bpy.app.translations.pgettext("1-2-1: texituring the image to mesh on Blender")
+    bl_description = bpy.app.translations.pgettext("1-2-1: texituring the image to mesh on Blender")
+
     bl_options = {'REGISTER', 'UNDO'}
 
     # ファイル指定のプロパティを定義する
-    # filepath, filename, directory の名称のプロパティを用意しておくと
-    # window_manager.fileselect_add 関数から情報が代入される
     filepath: StringProperty(
         name="File Path",      # プロパティ名
         default="",            # デフォルト値
@@ -55,6 +52,8 @@ class Import_Image2Object_iRIC2blender(bpy.types.Operator):
     def execute(self, context):
 
         def image_test():
+            """https://yuhoth.com/525/"""
+
             mat_name = "Grid_image"
             # MyMaterialが存在するかどうかを確認
             if bpy.data.materials.get(mat_name) is not None:
@@ -64,7 +63,8 @@ class Import_Image2Object_iRIC2blender(bpy.types.Operator):
 
             material = bpy.data.materials.new(mat_name)
             material.use_nodes=True
-            pic=material.node_tree.nodes["Principled BSDF"]
+            pic=material.node_tree.nodes[bpy.app.translations.pgettext("Principled BSDF")]
+
 
             #粗さ
             pic.inputs[9].default_value = 1.
@@ -75,14 +75,13 @@ class Import_Image2Object_iRIC2blender(bpy.types.Operator):
             texImage=material.node_tree.nodes.new('ShaderNodeTexImage')
             texImage.image=bpy.data.images.load(self.filepath)#表示したい画像のパス
             material.node_tree.links.new(pic.inputs['Base Color'], texImage.outputs['Color'])
-            # print(bpy.context.object.data.materials)
             bpy.context.object.data.materials.append(material) #材質の反映
 
 
 
         # スマートUV展開を実行する(デフォルト設定)
         def smartproject_UVmap_mesh(arg_objectname="Default") -> bool:
-            
+
             # 指定オブジェクトを取得する
             # (get関数は対象が存在しない場合 None が返る)
             selectob = bpy.data.objects.get(arg_objectname)
@@ -134,6 +133,7 @@ class Import_Image2Object_iRIC2blender(bpy.types.Operator):
 
         # ファイルパスをフォルダパスとファイル名に分割する
         filepath_folder, filepath_name = os.path.split(self.filepath)
+        
         # ファイルパスをフォルダ名の名称とファイル名の拡張子に分割する
         filepath_nameonly, filepath_ext = os.path.splitext(filepath_name)
 

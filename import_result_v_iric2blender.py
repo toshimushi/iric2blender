@@ -1,18 +1,16 @@
 import bpy
 from bpy.props import FloatVectorProperty, StringProperty
-from . import material
 
-# iricの計算結果をblenderのimport
-class ImportResult2DH_DEM_iRIC2blender(bpy.types.Operator):
+class ImportResult_velocity_iRIC2blender(bpy.types.Operator):
     #ラベル名の宣言
-    bl_idname = "object.import_result_dem_iric2blender"
-
-    bl_label = bpy.app.translations.pgettext("3-1-4: import calculation data of Nays2dh (Riverbed Variation)")
-    bl_description = bpy.app.translations.pgettext("3-1-4: import calculation data of Nays2dh (Riverbed Variation)")
-
+    bl_idname = "object.import_result_velocity_iric2blender"
+    bl_label = "iRICの計算結果より流速ベクトルをblenderに読み込み"
+    bl_description = "iRICの計算結果より流速ベクトルをblenderに読み込み"
     bl_options = {'REGISTER', 'UNDO'}
 
     # ファイル指定のプロパティを定義する
+    # filepath, filename, directory の名称のプロパティを用意しておくと
+    # window_manager.fileselect_add 関数から情報が代入される
     filepath: StringProperty(
         name="File Path",      # プロパティ名
         default="",            # デフォルト値
@@ -40,6 +38,7 @@ class ImportResult2DH_DEM_iRIC2blender(bpy.types.Operator):
     # 実行時イベント(保存先のフォルダの選択)
     def invoke(self, context, event):
         # ファイルエクスプローラーを表示する
+        # 参考URL:https://docs.blender.org/api/current/bpy.types.WindowManager.html#bpy.types.WindowManager.fileselect_add
         self.report({'INFO'}, "保存先のフォルダを指定してください")
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
@@ -66,8 +65,8 @@ class ImportResult2DH_DEM_iRIC2blender(bpy.types.Operator):
             screens = D.screens
             viewareas = [area for screen in screens for area in screen.areas if area.type == 'VIEW_3D']
             for area in viewareas:
+                # area.spaces.active.overlay.grid_scale = SCALE_LENGTH
                 area.spaces.active.clip_end = CLIP_END
-
 
 
         def return_max_file(path):
@@ -82,6 +81,8 @@ class ImportResult2DH_DEM_iRIC2blender(bpy.types.Operator):
 
 
         def make_verts_numpy(readfile):
+            #３行目以降を読み込みdfとする
+            # df = np.loadtxt(readfile, delimiter=',',skiprows=3)
             df = np.loadtxt(readfile, delimiter=',',skiprows=3, usecols=[0,1,2,3,4,5,6,7,8,9,10,11,12])
             return df
 
@@ -94,86 +95,63 @@ class ImportResult2DH_DEM_iRIC2blender(bpy.types.Operator):
             return MI,MJ
 
 
-        # vertsの作成
-        def make_vert(MI,MJ,df,df_row_n,obj_scale):
-            """ df_row_n = 4:Depth(Max), 5:Depth, 6:Elevation, 7:WaterSurfaceElevation """
-            verts=[]
+        def add_vector(readfile,obj_name,t,mabiki):
+            #collection 作成
+            l_sub_coll = []
+            col_name=str(f'Result_vector_{t}')
+            my_sub_coll = bpy.data.collections.new(col_name)
+            bpy.context.scene.collection.children.link(my_sub_coll)
+            l_sub_coll.append(my_sub_coll)
 
-            k=1
-            min_z = df[1][df_row_n]
-            for j in range(MJ):
-                for i in range(MI):
-                    k=i+MI*j
-                    if df[k][df_row_n] < min_z:
-                        min_z = df[k][df_row_n]
-
-            k=1
-            for j in range(MJ):
-                for i in range(MI):
-                    k=i+MI*j
-                    #原点補正なし
-                    verts.append([df[k][2]*obj_scale,df[k][3]*obj_scale,df[k][df_row_n]*obj_scale])
-
-            return verts
-
-
-        def make_obj(verts,faces,readfile,obj_name):
-            msh = bpy.data.meshes.new("cubemesh") #Meshデータの宣言
-            msh.from_pydata(verts, [], faces) # 頂点座標と各面の頂点の情報でメッシュを作成
-            cube_obj = bpy.data.objects.new(obj_name, msh) # メッシュデータでオブジェクトを作成
-
-            return cube_obj
-
-
-        def set_faces(MI,MJ):
-            faces=[]
-            k=1
-            for j in range(MJ-1):
-                for i in range(MI-1):
-                    k=i+MI*j
-                    # print([k,k+1,k+1+MI,k+MI],k,i,j)
-                    faces.append([k,k+1,k+1+MI,k+MI])
-            return faces
-
-
-
-        def make_ojb_each_files(readfile,df_row_n,obj_name):
             df = make_verts_numpy(readfile)
             MI,MJ = read_MI_MJ(readfile)
 
-            #set faces & verts
-            verts = make_vert(MI,MJ,df,df_row_n,obj_scale=1)
-            faces=set_faces(MI,MJ)
+            import math
+            k = 0
 
-            cube_obj=make_obj(verts,faces,readfile,obj_name)
-
-            return cube_obj
-
-
-
-        def make_elecation_ob(filepath_folder):
-            # iricのcsvファイル(地盤データ:elevation)からオブジェクトを作成
-            ob1 = make_ojb_each_files(readfile=f'{filepath_folder}/Result_{i}.csv',df_row_n=5,obj_name=f"cube_{i}_Elevation")
-
-            # 地盤データ用のマテリアルをセット
-            mat_el = material.materials_elevation()
+            for i in range(1,MI,mabiki):
+                for j in range(1,MJ,mabiki):
+                    # print(i,j,k,mabiki)
+                    try:
+                        vx = df[k][2]
+                        vy = df[k][3]
+                        vz = df[k][7]
+                        vvx = df[k][10]
+                        vvy = df[k][11]
 
 
-            # 地盤データから生成したオブジェクトと地盤データ用のマテリアルを統合
-            ob1.data.materials.append(mat_el)
+                        v = math.sqrt(vvx**2+vvy**2)
+                        # print(i,j,df[k][2],df[k][3],df[k][7],df[k][10],df[k][11],v)
+                        if v > 0:
+                            r_degree = math.degrees(math.atan(vvy/vvx))
+                            # bpy.ops.object.empty_add(type='SINGLE_ARROW', align='WORLD', location=(vx,vy,vz), scale = ( v, v, v), rotation=( math.radians(90.0),  math.radians(45.0), math.radians(90.0)+r_degree))
+                            bpy.ops.object.empty_add(type='SINGLE_ARROW', align='WORLD', location=(vx,vy,vz), rotation=( math.radians(90.0),  math.radians(45.0), math.radians(90.0-r_degree)))
 
-            #モディファイヤーを追加。今回はサブディビジョンサーフェスを適応。（ポリゴンが細分化されて表面がなめらかになる）
-            ob1.modifiers.new("subd", type='SUBSURF')
-            ob1.modifiers['subd'].levels = 3
+                            ob = bpy.context.object
+                            ob.name=f"empty_{t}_{i}_{j}"
+                            ob.scale[0] = v
+                            ob.scale[1] = v
+                            ob.scale[2] = v
 
-            # 現在のシーンにコレクションをリンク
-            my_sub_coll.objects.link(ob1)
+                            # print("v",v,r_degree)
+
+                            # # 現在のシーンにコレクションをリンク
+                            my_sub_coll.objects.link(ob)
+
+                            # 紐付ける前のコレクションへのリンクを解除
+                            bpy.context.scene.collection.children[0].objects.unlink(ob)
 
 
-            return ob1
+                            # print(f"{k}/{MI*MJ},{v}")
+                        k += (1 + mabiki*mabiki)
+                    except:
+                        k += (1 + mabiki*mabiki)
+
+            return my_sub_coll
 
 
         #ファイル数の確認
+        # max_file = return_max_file(path="in")
         max_file = return_max_file(path=filepath_folder)
         max_file = max_file -1
 
@@ -192,22 +170,13 @@ class ImportResult2DH_DEM_iRIC2blender(bpy.types.Operator):
 
 
 
-        l_sub_coll = []
         l_sub_coll2 = []
-
         for i in range(1,max_file):
 
-            #####
-            # 新しいCollrectionを作成
-            col_name=str(f'Result_{i}')
-            my_sub_coll = bpy.data.collections.new(col_name)
-            bpy.context.scene.collection.children.link(my_sub_coll)
-            l_sub_coll.append(my_sub_coll)
+            #ベクトル生成
+            my_sub_coll2 = add_vector(readfile=f'{filepath_folder}/Result_{i}.csv',obj_name=f"{i}_vector",t=i,mabiki=2)
+            l_sub_coll2.append(my_sub_coll2)
 
-
-
-            ## elevation
-            ob1 = make_elecation_ob(filepath_folder)
 
 
         #######
@@ -217,23 +186,28 @@ class ImportResult2DH_DEM_iRIC2blender(bpy.types.Operator):
         j=1
         for tt in range(0,max_file):
 
-           for i in range(len(l_sub_coll)):
-
+           print("####",tt)
+           for ii in range(len(l_sub_coll2)):
+               # print("####",list(ii))
                # オブジェクトを非表示
-               for ob in l_sub_coll[i].objects:
+               for ob in l_sub_coll2[ii].objects:
+                   # print(ob)
                    bpy.context.scene.frame_set(frame_number)
                    ob.hide_viewport  = True
                    ob.hide_render    = True
 
+                   # ob.keyframe_insert(data_path = "location",index = -1)
+                   # ob.keyframe_insert(data_path = "scale",index = -1)
                    ob.keyframe_insert(data_path = "hide_viewport",index = -1)
                    ob.keyframe_insert(data_path = "hide_render",index = -1)
-
-           print("####",tt)
 
            # オブジェクトを順番に表示
            if j < max_file -1:
                if frame_number >= 0*(j-1) and frame_number < 20*(j):
-                   for ob in l_sub_coll[j].objects:
+
+                   for ob in l_sub_coll2[j].objects:
+              # if frame_number >= 20 and frame_number < 40:
+              #     for ob in l_sub_coll[1].objects:
 
                        bpy.context.scene.frame_set(frame_number)
                        ob.hide_viewport  = False
@@ -241,11 +215,12 @@ class ImportResult2DH_DEM_iRIC2blender(bpy.types.Operator):
                        ob.keyframe_insert(data_path = "hide_viewport",index = -1)
                        ob.keyframe_insert(data_path = "hide_render",index = -1)
 
-
            j+=1
 
+           # print_objects()
 
            frame_number += frame_number_input
+
 
 
         return {'FINISHED'}

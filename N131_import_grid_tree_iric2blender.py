@@ -11,13 +11,12 @@ from . import N001_lib
 class ImportGridTree_iRIC2blender(bpy.types.Operator):
     #ラベル名の宣言
     bl_idname = "object.import_grid_tree_iric2blender"
-    bl_label = "1-3-1: iRIC格子(Nays2dh/植生データ)を読み込み"
-    bl_description = "1-3-1: iRIC格子(Nays2dh/植生データ)を読み込み"
+    bl_label = bpy.app.translations.pgettext("1-3-1: import vegetation data from iRIC grid (Nays2dh)")
+    bl_description = bpy.app.translations.pgettext("1-3-1: import vegetation data from iRIC grid (Nays2dh)")
+
     bl_options = {'REGISTER', 'UNDO'}
 
     # ファイル指定のプロパティを定義する
-    # filepath, filename, directory の名称のプロパティを用意しておくと
-    # window_manager.fileselect_add 関数から情報が代入される
     filepath: StringProperty(
         name="File Path",      # プロパティ名
         default="",            # デフォルト値
@@ -44,7 +43,6 @@ class ImportGridTree_iRIC2blender(bpy.types.Operator):
 
     # 実行時イベント(保存先のフォルダの選択)
     def invoke(self, context, event):
-        # ファイルエクスプローラーを表示する
         self.report({'INFO'}, "保存先のフォルダを指定してください")
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
@@ -56,7 +54,6 @@ class ImportGridTree_iRIC2blender(bpy.types.Operator):
         def make_verts_numpy(readfile):
             #３行目以降を読み込みdfとする
             df = np.loadtxt(readfile, delimiter=',',skiprows=3)
-            # df = np.loadtxt(readfile, delimiter=',',skiprows=3, usecols=[0,1,2,3,4,5,6,7,8,9,10,11,12])
             return df
 
         def read_MI_MJ(readfile):
@@ -161,7 +158,8 @@ class ImportGridTree_iRIC2blender(bpy.types.Operator):
             mat_node = mat_el.node_tree
 
             #base colorのalphaとプリンシプルBSDFのalphaのノードを結合する
-            mat_node.links.new(mat_node.nodes["画像テクスチャ"].outputs[1], mat_node.nodes["プリンシプルBSDF"].inputs[21])
+            mat_node.links.new(mat_node.nodes[bpy.app.translations.pgettext("Image Texture")].outputs["Alpha"],mat_node.nodes[bpy.app.translations.pgettext("Principled BSDF")].inputs["Alpha"])
+
 
 
 
@@ -171,14 +169,10 @@ class ImportGridTree_iRIC2blender(bpy.types.Operator):
             # 読み込む植生モデルの整理
             low_poly_trees     = ["pine_tree_lite"]
             mat_low_poly_trees = ['pine-leaf']
-            # low_poly_trees     = ["pine_tree_lite","yoshi_lite"]
-            # mat_low_poly_trees = ['pine-leaf',"mat_yoshi"]
-
             high_poly_trees    = ["willow","pine","maple","broadleaf_tree"]
 
             # 低ポリゴンの木をインポート
             for tree_name in low_poly_trees:
-                # bpy.ops.wm.collada_import(filepath='tree_data/low_poly_tree/pine_tree_lite/pine_tree_lite.dae')
                 bpy.ops.wm.collada_import(filepath=f'{addon_dirpath}/tree_data/low_poly_tree/{tree_name}/{tree_name}.dae')
 
             # 低ポリゴンの木にマテリアルを適用
@@ -250,6 +244,7 @@ class ImportGridTree_iRIC2blender(bpy.types.Operator):
 
         # ファイルパスをフォルダパスとファイル名に分割する
         filepath_folder, filepath_name = os.path.split(self.filepath)
+
         # ファイルパスをフォルダ名の名称とファイル名の拡張子に分割する
         filepath_nameonly, filepath_ext = os.path.splitext(filepath_name)
 
@@ -259,7 +254,6 @@ class ImportGridTree_iRIC2blender(bpy.types.Operator):
         bpy.context.scene.collection.children.link(my_sub_coll)
 
         #植生のあるメッシュを整理する
-        # ob1,faces_tree = make_elecation_ob_and_tree(self.filepath)
         ob1,faces_tree = make_ojb_each_files(readfile=self.filepath,df_row_n=6,obj_name=f"iRIC_Grid_Elevation")
 
         # 植生のあるメッシュに対して木を配置する

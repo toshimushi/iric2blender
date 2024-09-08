@@ -3,6 +3,22 @@ import numpy as np
 from . import material
 import os
 
+
+
+def update_language():
+    from . import N002_multi_language_dictionary
+
+    # 現在の言語設定を取得
+    lang = bpy.context.preferences.view.language
+    
+    # 日本語に設定されているか確認
+    if lang == 'ja_JP':
+        bpy.app.translations.unregister(__name__)  # 古い翻訳データを解除
+        bpy.app.translations.register(__name__, N002_multi_language_dictionary.translation_dict)
+
+update_language()
+
+
 #viewpointの設定
 def config_viewports():
     D = bpy.data
@@ -11,7 +27,6 @@ def config_viewports():
     screens   = D.screens
     viewareas = [area for screen in screens for area in screen.areas if area.type == 'VIEW_3D']
     for area in viewareas:
-        # area.spaces.active.overlay.grid_scale = SCALE_LENGTH
         area.spaces.active.clip_end = CLIP_END
 
 
@@ -19,7 +34,6 @@ def config_viewports():
 def read_file(readfile,usecols):
     #３行目以降を読み込みdfとする
     df = np.loadtxt(readfile, delimiter=',',skiprows=3,usecols=usecols)
-    # df = np.loadtxt(readfile, delimiter=',',skiprows=3, usecols=[0,1,2,3,4,5,6,7,8,9,10,11,12])
 
     #１行目よりMI,MJを取得
     with open(readfile) as f:
@@ -54,9 +68,6 @@ def framein_to_selected_object(obj_name):
     bpy.context.window.scene=bpy.data.scenes['Scene']
     bpy.context.area.type='VIEW_3D'
 
-    # # 視点をトップビューに変更する 
-    # bpy.ops.view3d.view_axis(type='TOP')
-
     # オブジェクトを選択する
     obj = bpy.data.objects[obj_name]
     obj.select_set(True)
@@ -80,10 +91,8 @@ class Make_mesh_object:
         min_z = min(self.df[i][2] for i in range(self.MI*self.MJ))
 
         for k in range(self.MI*self.MJ):
-            # verts.append([self.df[k][0]*self.obj_scale, self.df[k][1]*self.obj_scale, self.df[k][2]*self.obj_scale - min_z*self.obj_scale])
             x = self.df[k][0]*self.obj_scale
             y = self.df[k][1]*self.obj_scale
-            # z = self.df[k][2]*self.obj_scale - min_z*self.obj_scale
             z = self.df[k][2]*self.obj_scale
             verts.append([x, y, z])
 
@@ -113,7 +122,7 @@ class Make_mesh_object:
 
 def return_max_file(path):
     import os
-    
+    # path="in"
     max_file = 0
     files = os.listdir(path)
     files_file = [f for f in files if os.path.isfile(os.path.join(path, f))]
@@ -145,7 +154,6 @@ class Make_mesh_object_depth_velocity:
         min_z = min(self.df[i][2] for i in range(self.MI*self.MJ))
 
         for k in range(self.MI*self.MJ):
-            # verts.append([self.df[k][0]*self.obj_scale, self.df[k][1]*self.obj_scale, self.df[k][2]*self.obj_scale - min_z*self.obj_scale])
             x = self.df[k][0]*self.obj_scale
             y = self.df[k][1]*self.obj_scale
             z = (self.df[k][2] + self.df[k][3])*self.obj_scale
@@ -154,7 +162,6 @@ class Make_mesh_object_depth_velocity:
         return verts
 
     #面(faces)の生成
-    # def set_faces_depth(self):
     def set_faces_velocity(self):
         faces = []
         faces_depth=[]
@@ -177,7 +184,6 @@ class Make_mesh_object_depth_velocity:
     #メッシュオブジェクトの生成
     def make_obj_each_files_depth_velocity(self):
         verts = self.set_vert_depth()
-        # faces,faces_depth = self.set_faces_depth()
         faces,faces_depth, faces_velocity = self.set_faces_velocity()
         msh = bpy.data.meshes.new(self.obj_name)
         msh.from_pydata(verts, [], faces)
@@ -261,8 +267,6 @@ class Make_WaterSurface_depth_velocity_from_iRIC_result:
         #モディファイア設定
         material.mofifiers_on(obj)
 
-        #voronoi設定 
-        # material.voronoi_on(obj)
 
         # 現在のシーンにコレクションをリンク
         my_sub_coll.objects.link(obj)
@@ -292,9 +296,7 @@ class Make_WaterSurface_depth_velocity_from_iRIC_result:
             # 水深メッシュ（カラーコンター）の作成
             obj_name = f"{i}_iRIC_result"
             readfile = f'{self.filepath_folder}/Result_{i}.csv'
-            # bpy.data.scenes['Scene'].collection.objects.unlink(bpy.data.objects['2_iRIC_result'])
-            
-            # self.watersurface_make_ob_color(readfile, self.mat_list, self.color_set, self.df_col_list, self.usecols, obj_name, my_sub_coll)
+
             self.watersurface_make_ob_color(readfile, obj_name, my_sub_coll)
             bpy.data.scenes['Scene'].collection.objects.unlink(bpy.data.objects[obj_name])
                                             
